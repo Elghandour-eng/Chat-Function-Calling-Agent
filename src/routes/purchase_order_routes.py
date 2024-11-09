@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from bson import ObjectId
 from dotenv import load_dotenv
 
@@ -9,6 +9,9 @@ from database.mongodb_utils import find_documents, fuzzy_search, aggregate_docum
 from llms.azure_openai_client import ask_openai
 from utils.query_parser import parse_query
 from utils.prompt import get_prompt  # Importing the prompt
+from utils.logger_utils import Logger
+
+logging = Logger().get_logger()
 
 # Load environment variables from .env file
 load_dotenv()
@@ -62,29 +65,65 @@ def aggregate_purchase_orders():
     serialized_results = [serialize_document(result) for result in results]
     return jsonify(serialized_results), 200
 
-# --- AI Interaction Route ---
 
-@purchase_order_bp.route('/ask', methods=['POST'])
-def ask_question():
-    """Handle a natural language question and interact with the database."""
+# @purchase_order_bp.route('/chat', methods=['POST'])
+# def query_purchase_orders():
+#     """Interpret a natural language query and retrieve matching purchase orders."""
+#     data = request.json
+#     user_query = data.get('query', '')
+    
+#     if not user_query:
+#         logging.error("Query text is required.")
+#         return jsonify({"error": "Query text is required"}), 400
+    
+#     # Get the prompt and pass it along with the user query to OpenAI
+#     interpreted_query = ask_openai(user_query, get_prompt())
+#     logging.info(interpreted_query)
+    
+
+#     if "answer" not in interpreted_query:
+#         logging.error("Failed to get a valid response from OpenAI.")
+#         return jsonify({"error": "Failed to get a valid response from OpenAI."}), 500
+
+    
+#     if "error" in interpreted_query:
+#         logging.error(f"Error from OpenAI: {interpreted_query['error']}")
+#         return jsonify(interpreted_query), 500
+
+#     logging.info("Retrieved response from OpenAI successfully.")
+    
+#     return jsonify(interpreted_query), 200
+
+
+
+@purchase_order_bp.route('/chat', methods=['POST'])
+def query_purchase_orders():
+    """Interpret a natural language query and retrieve matching purchase orders."""
     data = request.json
-    question = data.get("question", "")
-    prompt = get_prompt()
+    user_query = data.get('query', '')
+    
+    if not user_query:
+        logging.error("Query text is required.")
+        return jsonify({"error": "Query text is required"}), 400
+    
+    # Retrieve the conversation history from the session
+    messages = session.get('messages', [])
+    
+    # Get the prompt and pass it along with the user query to OpenAI
+    interpreted_query = ask_openai(user_query, get_prompt(), messages)
+    logging.info(interpreted_query)
+    
+    if "answer" not in interpreted_query:
+        logging.error("Failed to get a valid response from OpenAI.")
+        return jsonify({"error": "Failed to get a valid response from OpenAI."}), 500
 
-    response_message = ask_openai(question, prompt)
+    if "error" in interpreted_query:
+        logging.error(f"Error from OpenAI: {interpreted_query['error']}")
+        return jsonify(interpreted_query), 500
 
-    if isinstance(response_message, dict):
-        return jsonify({"answer": response_message['answer']}), 200
-    else:
-        return jsonify({"answer": response_message}), 200
-
-@purchase_order_bp.route('/filter', methods=['GET'])
-def filter_purchase_orders():
-    """Filter purchase orders based on query parameters with special parsing."""
-    query = request.args.to_dict()
-    parsed_query = parse_query(query)  # Apply the custom query parser for fields like fiscal year
-    purchase_orders = find_documents(collection, parsed_query)
-    serialized_orders = [serialize_document(order) for order in purchase_orders]
-    return jsonify(serialized_orders), 200
-
-
+    logging.info("Retrieved response from OpenAI successfully.")
+    
+    # Save the updated conversation history back to the session
+    session['messages'] = messages
+    
+    return jsonify(interpreted_query), 200

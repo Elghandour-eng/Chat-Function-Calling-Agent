@@ -1,17 +1,64 @@
-{
-    "fetch_purchase_order_data": {
-      "name": "fetch_purchase_order_data",
-      "description": "Fetch relevant purchase orders based on query.",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "query": {
-            "type": "string",
-            "description": "Query for MongoDB filtering."
-          }
-        },
-        "required": ["query"]
-      },
-      "type": "function"
+[
+    {
+        "type": "function",
+        "function": {
+            "name": "get_all_purchase_orders",
+            "description": "Retrieve all purchase orders",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    {
+        "name": "get_first_six_purchase_orders",
+        "type": "function",
+        "description": "Retrieve the first six purchase orders",
+        "parameters": {}
+    },
+    {
+        "name": "search_purchase_orders",
+        "type": "function",
+        "description": "Perform a fuzzy search on purchase orders",
+        "parameters": {
+            "search_text": {
+                "type": "string",
+                "description": "Text to search for in purchase orders"
+            }
+        }
+    },
+    {
+        "name": "aggregate_purchase_orders",
+        "type": "function",
+        "description": "Execute an aggregation pipeline on purchase orders",
+        "parameters": {
+            "pipeline": {
+                "type": "array",
+                "description": "Aggregation pipeline steps",
+                "items": {"type": "object"}
+            }
+        }
+    },
+    {
+        "name": "ask_question",
+        "type": "function",
+        "description": "Ask a question related to purchase orders",
+        "parameters": {
+            "question": {
+                "type": "string",
+                "description": "Natural language question about purchase orders"
+            }
+        }
+    },
+    {
+        "name": "filter_purchase_orders",
+        "type": "function",
+        "description": "Filter purchase orders based on query parameters",
+        "parameters": {
+            "filters": {
+                "type": "object",
+                "description": "Filter criteria as key-value pairs"
+            }
+        }
     }
-  }
+]

@@ -1,0 +1,103 @@
+{
+    "info": {
+      "name": "Purchase Orders API",
+      "description": "Collection for interacting with the Purchase Orders API",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Get All Purchase Orders",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "http://127.0.0.1:5000/api/purchase_orders/",
+            "protocol": "http",
+            "host": ["127.0.0.1"],
+            "port": "5000",
+            "path": ["api", "purchase_orders"]
+          }
+        }
+      },
+      {
+        "name": "Get First Six Purchase Orders",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "http://127.0.0.1:5000/api/purchase_orders/first-six",
+            "protocol": "http",
+            "host": ["127.0.0.1"],
+            "port": "5000",
+            "path": ["api", "purchase_orders", "first-six"]
+          }
+        }
+      },
+      {
+        "name": "Search Purchase Orders",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "http://127.0.0.1:5000/api/purchase_orders/search?q=",
+            "protocol": "http",
+            "host": ["127.0.0.1"],
+            "port": "5000",
+            "path": ["api", "purchase_orders", "search"],
+            "query": [
+              {
+                "key": "q",
+                "value": ""
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Aggregate Purchase Orders",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\"pipeline\": []}"
+          },
+          "url": {
+            "raw": "http://127.0.0.1:5000/api/purchase_orders/aggregate",
+            "protocol": "http",
+            "host": ["127.0.0.1"],
+            "port": "5000",
+            "path": ["api", "purchase_orders", "aggregate"]
+          }
+        }
+      },
+      {
+        "name": "Chat with Purchase Orders",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\"query\": \"Your natural language query here\"}"
+          },
+          "url": {
+            "raw": "http://127.0.0.1:5000/api/purchase_orders/chat",
+            "protocol": "http",
+            "host": ["127.0.0.1"],
+            "port": "5000",
+            "path": ["api", "purchase_orders", "chat"]
+          }
+        }
+      }
+    ]
+  }

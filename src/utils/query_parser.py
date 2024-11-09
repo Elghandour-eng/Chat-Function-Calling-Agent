@@ -8,13 +8,20 @@ def parse_fiscal_year(fiscal_year_code: int) -> int:
 
 def parse_query(query: Dict) -> Dict:
     """Parse and map query parameters into MongoDB-compatible format."""
+    # Ensure query is a dictionary before proceeding
+    if not isinstance(query, dict):
+        raise ValueError("Expected a dictionary for the query.")
+
     parsed_query = {}
 
     # Map 'fiscal_year' to the correct model name if present in the query
     if 'fiscal_year' in query:
-        fiscal_year_code = int(query['fiscal_year'])  # Convert to integer if passed as a string
-        mapped_fiscal_year = parse_fiscal_year(fiscal_year_code)
-        parsed_query['fiscal_year'] = mapped_fiscal_year
+        try:
+            fiscal_year_code = int(query['fiscal_year'])  # Convert to integer if passed as a string
+            mapped_fiscal_year = parse_fiscal_year(fiscal_year_code)
+            parsed_query['fiscal_year'] = mapped_fiscal_year
+        except ValueError:
+            parsed_query['fiscal_year'] = "Unknown fiscal year"
 
     # Map additional SCPRS fields
     field_mapping = {
