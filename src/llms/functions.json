@@ -1,0 +1,17 @@
+{
+    "fetch_purchase_order_data": {
+      "name": "fetch_purchase_order_data",
+      "description": "Fetch relevant purchase orders based on query.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Query for MongoDB filtering."
+          }
+        },
+        "required": ["query"]
+      },
+      "type": "function"
+    }
+  }
