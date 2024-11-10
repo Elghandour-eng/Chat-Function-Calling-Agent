@@ -205,12 +205,12 @@ def ask_openai(question, prompt, messages):
                             "type": "string",
                             "description": "The field to search within purchase orders"
                         },
-                        "search_text": {
+                        "q": {
                             "type": "string",
-                            "description": "Text to search for in purchase orders"
+                            "description": "Text query to search for in purchase orders"
                         }
                     },
-                    "required": ["field", "search_text"]
+                    "required": ["field", "q"]
                 }
             }
         },

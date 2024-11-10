@@ -60,11 +60,13 @@ def create_text_index(collection: Collection, fields: list) -> bool:
         logger.error(f"Failed to create text index: {e}")
         return False
 
-def fuzzy_search(collection: Collection, search_text: str) -> list:
-    """Perform a fuzzy search using a text index."""
+def fuzzy_search(collection: Collection, search_text: str, field: str) -> list:
+    """Perform a fuzzy search using a regex on a specific field."""
     try:
-        documents = list(collection.find({"$text": {"$search": search_text}}))
-        logger.info(f"Found {len(documents)} documents matching the search text.")
+        # Use a case-insensitive regex search on the specified field
+        query = {field: {"$regex": search_text, "$options": "i"}}
+        documents = list(collection.find(query))
+        logger.info(f"Found {len(documents)} documents matching the search text in field '{field}'.")
         return documents
     except PyMongoError as e:
         logger.error(f"Failed to perform fuzzy search: {e}")

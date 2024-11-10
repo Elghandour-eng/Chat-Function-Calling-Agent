@@ -59,7 +59,7 @@ def search_purchase_orders():
         return jsonify({"error": "Field and search text are required"}), 400
 
     # Implement your fuzzy search logic here, using the specified field
-    purchase_orders = fuzzy_search(collection, field, search_text)
+    purchase_orders = fuzzy_search(collection, search_text, field)
     serialized_orders = [serialize_document(order) for order in purchase_orders]
     return jsonify(serialized_orders), 200
 

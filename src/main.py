@@ -47,36 +47,34 @@ def print_like_dislike(x: gr.LikeData):
     print(x.index, x.value, x.liked)
 
 def add_message(history, message):
-    for x in message["files"]:
-        history.append({"role": "user", "content": {"path": x}})
-    if message["text"] is not None:
-        history.append({"role": "user", "content": message["text"]})
-    return history, gr.MultimodalTextbox(value=None, interactive=False)
+    history.append({"role": "user", "content": message})
+    return history, ""
 
 def bot(history: list):
     user_query = history[-1]["content"]
     response = query_chat(user_query)
-    history.append({"role": "assistant", "content": ""})
-    for character in response:
-        history[-1]["content"] += character
-        time.sleep(0.05)
-        yield history
+    history.append({"role": "assistant", "content": response})
+    yield history
 
-with gr.Blocks() as demo:
-    chatbot = gr.Chatbot(elem_id="chatbot", bubble_full_width=False, type="messages")
+with gr.Blocks(css="""
+    .gradio-container {background-color: #121212; color: #ffffff; height: 100vh; display: flex; flex-direction: column;}
+    .chatbot {flex: 1; overflow: auto; margin-bottom: 10px;}
+    .textbox {width: 100%;}
+""") as demo:
+    chatbot = gr.Chatbot(elem_id="chatbot", bubble_full_width=True, type="messages")
 
-    chat_input = gr.MultimodalTextbox(
+    chat_input = gr.Textbox(
         interactive=True,
-        file_count="multiple",
-        placeholder="Enter message or upload file...",
+        placeholder="Enter message...",
         show_label=False,
+        elem_id="textbox"
     )
 
     chat_msg = chat_input.submit(
         add_message, [chatbot, chat_input], [chatbot, chat_input]
     )
     bot_msg = chat_msg.then(bot, chatbot, chatbot, api_name="bot_response")
-    bot_msg.then(lambda: gr.MultimodalTextbox(interactive=True), None, [chat_input])
+    bot_msg.then(lambda: gr.Textbox(interactive=True), None, [chat_input])
 
     chatbot.like(print_like_dislike, None, None, like_user_message=True)
 
