@@ -166,7 +166,6 @@ def ask_openai(question, prompt, messages):
     """Send question and prompt to Azure OpenAI and return the response."""
     logging.info(f"Received question: {question}")
 
-    # Add the system prompt and user question to the messages list if it's empty
     if not messages:
         messages.append({"role": "system", "content": prompt})
     messages.append({"role": "user", "content": question})
@@ -198,16 +197,20 @@ def ask_openai(question, prompt, messages):
             "type": "function",
             "function": {
                 "name": "search_purchase_orders",
-                "description": "Perform a fuzzy search on purchase orders",
+                "description": "Perform a fuzzy search on purchase orders by a search text and field don't pass from other always pass both.",
                 "parameters": {
                     "type": "object",
                     "properties": {
+                        "field": {
+                            "type": "string",
+                            "description": "The field to search within purchase orders"
+                        },
                         "search_text": {
                             "type": "string",
                             "description": "Text to search for in purchase orders"
                         }
                     },
-                    "required": ["search_text"]
+                    "required": ["field", "search_text"]
                 }
             }
         },
@@ -221,7 +224,7 @@ def ask_openai(question, prompt, messages):
                     "properties": {
                         "pipeline": {
                             "type": "array",
-                            "description": "Aggregation pipeline steps",
+                            "description": "Aggregation pipeline steps try to parse user queries like give me count of document for example in day to pipeline steps matching with mongo ",
                             "items": {
                                 "type": "object"
                             }
@@ -230,11 +233,27 @@ def ask_openai(question, prompt, messages):
                     "required": ["pipeline"]
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "general_inquiry",
+                "description": "Generate a MongoDB aggregation pipeline from user inquiry",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "inquiry": {
+                            "type": "string",
+                            "description": "User inquiry to generate a pipeline"
+                        }
+                    },
+                    "required": ["inquiry"]
+                }
+            }
         }
     ]
 
     try:
-        # Send the query and context to OpenAI for processing
         logging.info("Sending query to OpenAI for processing...")
         response = client.chat.completions.create(
             model=deployment_name,
@@ -243,11 +262,9 @@ def ask_openai(question, prompt, messages):
             tool_choice="auto",
         )
 
-        # Convert the response to a dictionary
         response_message = response.choices[0].message.to_dict()
-        messages.append(response_message)  # Add the model's response to the messages list
+        messages.append(response_message)
 
-        # Check if OpenAI suggests using a tool
         if response_message.get('tool_calls'):
             for tool_call in response_message['tool_calls']:
                 function_name = tool_call['function']['name']
@@ -255,15 +272,12 @@ def ask_openai(question, prompt, messages):
                 print(f"Function call: {function_name}")  
                 print(f"Function arguments: {function_args}")  
 
-                # Define Flask API URL (make sure to use the correct base URL)
-                flask_base_url = "http://127.0.0.1:5000/api/purchase_orders"  # Replace with actual URL of your Flask app
+                flask_base_url = "http://127.0.0.1:5000/api/purchase_orders"
                 api_url = ""
 
-                # Based on the tool name, call the corresponding API endpoint
                 if function_name == "get_all_purchase_orders":
                     api_url = f"{flask_base_url}/"
                     response = requests.get(api_url, params=function_args)
-                    logging.info(response)
                 elif function_name == "get_first_six_purchase_orders":
                     api_url = f"{flask_base_url}/first-six"
                     response = requests.get(api_url, params=function_args)
@@ -273,30 +287,75 @@ def ask_openai(question, prompt, messages):
                 elif function_name == "aggregate_purchase_orders":
                     api_url = f"{flask_base_url}/aggregate"
                     response = requests.post(api_url, json=function_args)
-                
-                # Log the API response from Flask
-                if response:
+                elif function_name == "general_inquiry":
+                    logging.info("Generating pipeline for general inquiry...")
+                    try:
+                        inquiry_prompt = (
+            "You are a helpful assistant that creates MongoDB aggregation pipelines.  don't include ``` json at first or ``` at end"
+            "Do not include markdown formatting like json at the beginning or end of your response. "
+            "Here are some examples and details to help you create a good pipeline:\n\n"
+            "- **Fiscal Year**: Encoded as `0` for 2012-2013, `1` for 2013-2014, and `2` for 2014-2015.\n"
+            "- **Creation Date**: System-generated date marking when data is entered.\n"
+            "- **Purchase Date**: Actual date of purchase as recorded by the user.\n"
+            "- **Fiscal Year**: Derived based on the creation date, following California's fiscal cycle (July 1 - June 30).\n"
+            "- **LPA Number**: Contract or Leveraged Procurement Agreement (LPA) Number, marking contract dollars.\n"
+            "- **Purchase Order Number**: Unique to each purchase order but can be duplicated across departments.\n"
+            "- **Requisition Number**: Unique to each requisition, though duplicable across departments.\n"
+            "- **Acquisition Type & Method**: Categories of acquisition (IT vs. Non-IT Goods/Services) and procurement method used.\n"
+            "- **Department Name**: Identifies the purchasing department.\n"
+            "- **Supplier Details**: Include supplier code, name, qualifications, and zip code.\n"
+            "- **CalCard Usage**: Marks if a state-issued credit card was used.\n"
+            "- **Item Details**: Include item name, description, quantity, unit price, and total price.\n"
+            "- **UNSPSC Classification Codes**: An 8-digit normalized United Nations Standard Products and Services Code (UNSPSC) for items, along with correlated commodity title, class, family, and segment information.\n\n"
+            "Create a pipeline for the following inquiry: "
+            f"{function_args['inquiry']}"
+        )
+                        pipeline_response = client.chat.completions.create(
+                            model=deployment_name,
+                                       messages=[
+                {"role": "system", "content": inquiry_prompt},
+                {"role": "user", "content": function_args['inquiry']}
+            ]
+                        )
+                        generated_pipeline = pipeline_response.choices[0].message.content
+                        logging.info(f"Generated pipeline: {generated_pipeline}")
+                        pipeline_json = json.loads(generated_pipeline)
+                        api_url = f"{flask_base_url}/aggregate"
+                        response = requests.post(api_url, json={"pipeline": pipeline_json})
+                    except Exception as e:
+                        logging.error(f"Error generating pipeline: {str(e)}")
+                        messages.append({
+                            "tool_call_id": tool_call['id'],
+                            "role": "tool",
+                            "name": function_name,
+                            "content": "not found"
+                        })
+                        continue
+
+                if response.status_code in [400, 500]:
+                    logging.error(f"Error calling Flask API: {response.status_code}")
+                    messages.append({
+                        "tool_call_id": tool_call['id'],
+                        "role": "tool",
+                        "name": function_name,
+                        "content": "not found"
+                    })
+                else:
                     data = response.json()
-                    # Append the tool call result to the messages list
                     messages.append({
                         "tool_call_id": tool_call['id'],
                         "role": "tool",
                         "name": function_name,
                         "content": json.dumps(data),
                     })
-                else:
-                    logging.error(f"Error calling Flask API: {response}, {response}")
-                    return {"error": f"Failed to fetch data from Flask API. Status code: {response}"}
-        
-        # Make a second API call to get the final response
+
         final_response = client.chat.completions.create(
             model=deployment_name,
             messages=messages,
         )
 
-        # Return the final response content
         return {"answer": final_response.choices[0].message.content}
 
     except Exception as e:
         logging.error(f"Error occurred during OpenAI interaction: {str(e)}")
-        return {"error": str(e)}
+        return {"answer": "not found"}

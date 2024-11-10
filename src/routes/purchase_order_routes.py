@@ -51,9 +51,15 @@ def get_first_six_purchase_orders():
 
 @purchase_order_bp.route('/search', methods=['GET'])
 def search_purchase_orders():
-    """Perform a fuzzy search on purchase orders by a search text."""
+    """Perform a fuzzy search on purchase orders by a search text and field."""
+    field = request.args.get('field', '')
     search_text = request.args.get('q', '')
-    purchase_orders = fuzzy_search(collection, search_text)
+
+    if not field or not search_text:
+        return jsonify({"error": "Field and search text are required"}), 400
+
+    # Implement your fuzzy search logic here, using the specified field
+    purchase_orders = fuzzy_search(collection, field, search_text)
     serialized_orders = [serialize_document(order) for order in purchase_orders]
     return jsonify(serialized_orders), 200
 
@@ -61,6 +67,7 @@ def search_purchase_orders():
 def aggregate_purchase_orders():
     """Execute an aggregation pipeline on purchase orders."""
     pipeline = request.json.get('pipeline', [])
+    logging.info(f"Received pipeline: {pipeline}")  # Log the pipeline
     results = aggregate_documents(collection, pipeline)
     serialized_results = [serialize_document(result) for result in results]
     return jsonify(serialized_results), 200
