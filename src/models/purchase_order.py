@@ -20,8 +20,8 @@ class PurchaseOrder:
         item_name: Optional[str],
         item_description: Optional[str],
         quantity: Optional[float],
-        unit_price: Optional[str],
-        total_price: Optional[str],
+        unit_price: Optional[float],
+        total_price: Optional[float],
         classification_codes: Optional[str],
         commodity_title: Optional[str],
         class_: Optional[float],  # 'class' is a reserved keyword in Python, so use 'class_'
