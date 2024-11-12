@@ -57,9 +57,23 @@ def bot(history: list):
     yield history
 
 with gr.Blocks(css="""
-    .gradio-container {background-color: #121212; color: #ffffff; height: 100vh; display: flex; flex-direction: column;}
-    .chatbot {flex: 1; overflow: auto; margin-bottom: 10px;}
-    .textbox {width: 100%;}
+    .gradio-container { 
+        background-color: #f0f0f0; 
+        color: #000000; 
+        height: 100vh; 
+        display: flex; 
+        flex-direction: column; 
+    }
+    #chatbot { 
+        flex-grow: 1; 
+        overflow-y: auto; 
+        height: 100vh; 
+        margin-bottom: 10px; 
+    }
+    #textbox { 
+        width: 100%; 
+        margin-top: auto; 
+    }
 """) as demo:
     chatbot = gr.Chatbot(elem_id="chatbot", bubble_full_width=True, type="messages")
 

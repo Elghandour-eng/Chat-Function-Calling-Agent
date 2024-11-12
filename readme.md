@@ -78,4 +78,13 @@ Once the environment is set up and dependencies are installed, you can run the p
 python src/main.py
 ```
 
+This setup runs both a Flask API server and a Gradio UI client in parallel, allowing you to interact with the application via both interfaces.
+
+### Access URLs
+
+- **API Server** (Flask): [http://127.0.0.1:5000](http://127.0.0.1:5000)
+- **UI Client** (Gradio): [http://127.0.0.1:7860](http://127.0.0.1:7860)
+
+
+
 Ensure that your environment variables are correctly set up to connect to your MongoDB and Azure services.
