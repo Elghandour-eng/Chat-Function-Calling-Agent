@@ -37,7 +37,34 @@ This project is a native application utilizing Azure and function calling to ret
     └── main.py
 ```
 
+This diagram illustrates the flow of the system:
+```mermaid
+graph TD
+    A[User Query] --> B{LLM Decision}
+    B -->|Search| C[Search Tool]
+    B -->|Aggregate| D[Aggregate Tool]
+    B -->|Direct Retrieval| E[Retrieve Inquiry]
+    C --> F[Query MongoDB]
+    D --> G[Generate Aggregation Pipeline]
+    G --> H[Additional LLM Chain]
+    H --> I[Execute MongoDB Aggregation]
+    E --> J[Direct MongoDB Query]
+    F --> K[Return Results]
+    I --> K
+    J --> K
+    K --> L[Format Response - Azure LLM]
+    L --> M[Final Formatted Response]
+```
+1. User query is received and passed to the LLM for decision-making.
+2. The LLM decides between three main paths: Search, Aggregate, or Direct Retrieval.
+3. If Search is chosen, it uses the Search Tool to query MongoDB with specific fields.
+4. If Aggregate is chosen, it generates an aggregation pipeline, which is then passed through another LLM chain to refine and execute the MongoDB aggregation.
+5. If Direct Retrieval is chosen, it queries MongoDB directly without additional processing.
+6. All paths converge to return results.
+7. The results are then passed to an Azure LLM for formatting the response.
+8. The formatted response is presented to the user.
 
+Note: In the future, the Azure LLM used for formatting the response should be replaced with an offline model to enhance security and reduce dependency on external services.
 
 ## Setup Instructions
 
@@ -84,7 +111,6 @@ This setup runs both a Flask API server and a Gradio UI client in parallel, allo
 
 - **API Server** (Flask): [http://127.0.0.1:5000](http://127.0.0.1:5000)
 - **UI Client** (Gradio): [http://127.0.0.1:7860](http://127.0.0.1:7860)
-
 
 
 Ensure that your environment variables are correctly set up to connect to your MongoDB and Azure services.
